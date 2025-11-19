@@ -1,6 +1,6 @@
 // backend/controllers/productController.js
 
-import { sql } from '../lib/db.js'; // adjust path if needed
+import { sql } from '../config/db.js'; // adjust path if needed
 
 // 1. Create / Update Product (same as your transaction style)
 export async function createOrUpdateProduct(req, res) {
