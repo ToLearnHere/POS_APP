@@ -7,8 +7,10 @@ import {
   createCategory,
   getCategories
 } from '../controllers/productController.js';
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
 
 const router = express.Router();
+
 
 // All routes protected by Clerk
 router.use(ClerkExpressRequireAuth({}));
