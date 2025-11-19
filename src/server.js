@@ -5,6 +5,7 @@ import rateLimiter from './middleware/rateLimiter.js';
 import productRoutes from './routes/productRoute.js';
 import transactionsRoute from "./routes/transactionsRoute.js"
 import job from "./config/cron.js";
+import cors from 'cors';
 
 dotenv.config();
 
@@ -13,9 +14,13 @@ const app = express();
 if (process.env.NODE_ENV === "production") job.start();
 
 //built-in middleware to parse JSON bodies
+app.use(cors());
 app.use(rateLimiter);
 app.use(express.json());
 
+// routes
+app.use('/api', productRoutes);
+app.use("/api/transactions", transactionsRoute);
 
 const PORT = process.env.PORT || 5001;
 
@@ -24,10 +29,7 @@ app.get("/api/health", (req, res) => {
 }) 
 
 app.use("/api/transactions", transactionsRoute);
-
-
-// ... after app = express(), cors, etc.
-app.use('/api', productRoutes);   // THIS IS THE MISSING LINE
+app.use('/api', productRoutes);   
 
 console.log("my port:",process.env.PORT)
 
