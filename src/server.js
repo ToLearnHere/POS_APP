@@ -30,10 +30,35 @@ app.get('/api/health', (req, res) => {
 app.use('/api', productRoutes);           // products, categories, etc.
 app.use('/api/transactions', transactionsRoute);
 
-// 5. 404 catcher (helps debugging)
+// 5. Error handling middleware (must be after routes)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  if (!res.headersSent) {
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+});
+
+// 6. 404 catcher (helps debugging)
 app.use('*', (req, res) => {
   res.status(404).json({ error: `Route ${req.originalUrl} not found` });
 });
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    const result = await sql`SELECT NOW()`;
+    res.json({ db_connected: true, time: result[0].now });
+  } catch (err) {
+    res.status(500).json({ db_connected: false, error: err.message });
+  }
+});
+// ADD THIS TEMPORARY TEST ROUTE
+app.get('/api/test', (req, res) => {
+  res.json({ message: "Server is working!", time: new Date().toISOString() });
+});
+app.get('/api/ping', (req, res) => {
+  res.json({ ping: "pong", time: new Date().toISOString() });
+});
+
+
 
 const PORT = process.env.PORT || 5001;
 

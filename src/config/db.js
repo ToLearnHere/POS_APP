@@ -42,8 +42,8 @@ export async function initDB() {
                 image TEXT,
                 is_active BOOLEAN DEFAULT true,
                 clerk_id VARCHAR(255) NOT NULL,  -- ← This is Clerk's user.id
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                updated_at TIMESTAMPTZ DEFAULT NOW()
+                created_at NOT NULL DEFAULT CURRENT_DATE,
+                updated_at NOT NULL DEFAULT CURRENT_DATE
             )
         `;
 
@@ -56,7 +56,7 @@ export async function initDB() {
                 quantity INTEGER NOT NULL,
                 reason TEXT,
                 clerk_id VARCHAR(255) NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT NOW()
+                created_at NOT NULL DEFAULT CURRENT_DATE
             )
         `;
 
@@ -69,8 +69,8 @@ export async function initDB() {
         `;
 
         // Indexes for speed
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_clerk ON products(clerk_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_clerk ON products(clerk_id)`;
 
         console.log("Database ready! No users table needed — using Clerk");
     } catch (error) {
