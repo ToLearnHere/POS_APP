@@ -2,81 +2,55 @@
 
 // ⚠️ We MUST use the official Clerk SDK for secure JWT verification.
 import { clerkClient } from '@clerk/clerk-sdk-node'; 
-import 'dotenv/config'; // Ensure environment variables are loaded if not done elsewhere
-
-// Initialize clerkClient with your secret key 
-// Note: CLERK_SECRET_KEY must be in your backend's .env file
-if (!process.env.CLERK_SECRET_KEY) {
-    console.error("CLERK_SECRET_KEY is NOT set. Authentication will fail.");
-}
-
-// ⚠️ WARNING: If your authMiddleware logic lives in a shared entry file,
-// ensure the Clerk SDK is initialized correctly for your framework (e.g., Express).
+// NOTE: Ensure your main server file runs import 'dotenv/config' BEFORE this file is imported.
 
 const authMiddleware = async (req, res, next) => {
+    // 🚨 DEBUG CHECK (FOR YOU): Check if the key is available
+    // console.log('CLERK_SECRET_KEY status:', process.env.CLERK_SECRET_KEY ? 'LOADED' : 'MISSING');
+
+    const authHeader = req.headers.authorization;
+    const tokenPresent = authHeader && authHeader.startsWith('Bearer ');
+    const token = tokenPresent ? authHeader.replace('Bearer ', '') : null;
+
     try {
-        // 1. Get token from Authorization header
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            req.auth = null;
-            return next(); // Allow unauthenticated access if needed
-        }
-
-        const token = authHeader.replace('Bearer ', '');
-
+        // 1. Handle missing token: Allow public access
         if (!token) {
             req.auth = null;
-            return next();
+            return next(); 
         }
 
-        // 2. 🛡️ VERIFY AND DECODE the token using the official Clerk SDK
-        // This checks the signature, expiration, and issuer securely.
-        const sessionToken = token;
-        
-        // We use clerkClient.sessions.verifySession (or similar) to verify the token.
-        // For standard Clerk JWTs (like the ones from getToken()), use sessions.verifySession or sessions.verifyToken
-        // Since you are using Express, the recommended approach is usually to verify the token directly.
+        // 2. VERIFY AND DECODE the token
+        const jwtPayload = await clerkClient.verifyToken(token);
+        const userId = jwtPayload.sub; 
 
-        let userId = null;
-        let sessionId = null;
-        
-        // If your token is a Clerk Session Token (from getToken()), use:
-        // const session = await clerkClient.sessions.verifySession(sessionToken);
-        // userId = session.userId;
-        // sessionId = session.id;
-
-        // If your token is a Clerk-issued JWT (which `getToken()` provides):
-        // You can decode the token to get the claims and verify the signature using the public key.
-        // A direct, production-ready solution involves using the Clerk `verifyToken` function:
-        const jwtPayload = await clerkClient.verifyToken(sessionToken);
-        userId = jwtPayload.sub; // Standard JWT claim for the user ID
-
+        // 3. Final check for userId
         if (!userId) {
-            console.log('Verification failed: No userId found in verified token.');
+            console.warn('Verification failed: No userId found in verified token payload.');
             req.auth = null;
-            return next();
+            return next(); 
         }
 
-        // 3. Set req.auth with the verified user information
-        req.auth = {
-            userId: userId,
-            // You can extract more payload data here if needed
-        };
-        
+        // 4. Set req.auth
+        req.auth = { userId };
         console.log('Auth successful (Verified JWT) for userId:', userId);
         next();
+        
     } catch (error) {
-        // 🚨 ADD THIS LINE TO DEBUG 🚨
-        console.error('CRITICAL: Token verification failed:', error); 
+        // This block runs if verifyToken fails (e.g., expired, bad signature)
+        console.error('CRITICAL: Token verification failed:', error);
         console.log('Received token:', req.headers.authorization);
-        // console.error('CRITICAL: Token verification failed:', error.message);
-        // console.log('Received token:', req.headers.authorization);
-        // If verification fails (e.g., expired, wrong signature), treat as unauthenticated
+        
+        // 🛡️ ENHANCEMENT: If a token was provided but failed verification, 
+        // we immediately reject the request with 401.
         req.auth = null;
-        next(); 
-
+        
+        // This sends the 401 response here, preventing the request from reaching the controller
+        return res.status(401).json({ 
+            message: "Unauthorized: Invalid or expired token.",
+            error: error.message 
+        });
     }
 };
 
+// If you are using 'export default' in your file structure:
 export default authMiddleware;
