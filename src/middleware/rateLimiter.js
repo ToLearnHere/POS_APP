@@ -1,86 +1,49 @@
-import ratelimit from "../config/upstash.js";
+// backend/src/middleware/rateLimiter.js
 
+import ratelimit from "../config/upstash.js"; // Assuming this imports an Upstash Redis/RateLimit client
+
+/**
+ * Middleware to enforce rate limiting per authenticated User ID (Clerk ID).
+ * This relies on the authMiddleware running BEFORE this one to populate req.auth.
+ */
 const rateLimiter = async (req, res, next) => {
-  try {
-    const { success } = await ratelimit.limit("my-rate-limit");
+    let identifierKey;
+    const clerk_id = req.auth?.userId; // Extract Clerk User ID
 
-    if (!success) {
-      return res.status(429).json({
-        message: "Too many requests, please try again later.",
-      });
+    // 1. Rate Limit Per Authenticated User ID (Recommended)
+    if (clerk_id) {
+        identifierKey = `user_${clerk_id}`;
+    } else {
+        // 2. Fallback to IP for unauthenticated or public routes (if auth middleware skipped)
+        const clientIp = req.headers['x-forwarded-for'] || req.ip;
+        identifierKey = `ip_${clientIp}`;
+        console.warn("Rate Limiter using IP fallback (Unauthenticated access).");
     }
 
-    next();
-  } catch (error) {
-    console.log("Rate limit error", error);
-    next(error);
-  }
+    try {
+        // Use the dynamic key for the limit check
+        // You would define the limit configuration in your 'ratelimit' client setup
+        const { success, limit, remaining, reset } = await ratelimit.limit(identifierKey);
+
+        // Send rate limit headers back to the client
+        res.setHeader('X-RateLimit-Limit', limit);
+        res.setHeader('X-RateLimit-Remaining', remaining);
+        res.setHeader('X-RateLimit-Reset', reset);
+
+        if (!success) {
+            console.warn(`Rate limit exceeded for key: ${identifierKey}`);
+            return res.status(429).json({
+                message: "Too many requests. Please slow down and try again later.",
+            });
+        }
+
+        // If successful, continue to the next middleware/route handler
+        next();
+    } catch (error) {
+        console.error(`Rate limit service error for key ${identifierKey}:`, error);
+        // Log the error but proceed to the next handler if the service fails
+        next(); 
+    }
 };
 
 export default rateLimiter;
-
-//import ratelimit from "../config/upstash.js"; // Assuming this imports an Upstash Redis/RateLimit client
-
-/**
- * Middleware to enforce rate limiting based on a dynamic key (User ID or IP Address).
- *
- * NOTE: Choose ONE method (User ID or IP) by commenting out the other.
- */
-//const rateLimiter = async (req, res, next) => {
-    //let identifierKey;
-
-    // ====================================================================
-    // OPTION 1: Rate Limit Per Authenticated User ID (RECOMMENDED)
-    // This is the best approach for protecting application-specific actions
-    // as it prevents abuse even if users share an IP (like in an office).
-    // Requires an authentication middleware to run BEFORE this one.
-    // ====================================================================
-    //if (req.user && req.user.id) {
-        // Assuming your authentication middleware places user data at req.user
-    //    identifierKey = `user_${req.user.id}`;
-   // }
-
-    // ====================================================================
-    // OPTION 2: Rate Limit Per IP Address
-    // Use this if the route is public (unauthenticated).
-    // ====================================================================
-   // if (!identifierKey) { // Only use IP if a user ID wasn't found (for public routes)
-        // In a production environment behind a proxy or load balancer (like Nginx, AWS ELB, etc.),
-        // the client IP is often found in the 'x-forwarded-for' header.
-        // It's best practice to use a reliable utility to extract the IP address.
-    //    const clientIp = req.headers['x-forwarded-for'] || req.ip;
-   //     identifierKey = `ip_${clientIp}`;
-   // }
-
-    // Fallback in case neither is available (shouldn't happen)
-    //if (!identifierKey) {
-   //     console.warn("Rate Limiter could not find a key. Using fallback.");
-   //     identifierKey = "unknown_client";
-   // }
-
-   // try {
-        // Use the dynamic key for the limit check
-    //    const { success, limit, remaining, reset } = await ratelimit.limit(identifierKey);
-
-        // It is good practice to send rate limit headers back to the client
-      //  res.setHeader('X-RateLimit-Limit', limit);
-    //    res.setHeader('X-RateLimit-Remaining', remaining);
-    //    res.setHeader('X-RateLimit-Reset', reset); // Time when the limit resets (usually a Unix timestamp)
-
-   //     if (!success) {
-    //        return res.status(429).json({
-   //             message: "Too many requests. Please slow down and try again later.",
-   //         });
-   //     }
-
-        // If successful, continue to the next middleware/route handler
-   //     next();
-   // } catch (error) {
-  //      console.error(`Rate limit service error for key ${identifierKey}:`, error);
-        // Do not return 429 on service error, as it might block legitimate requests
-        // if the rate limit service is down. Just log and proceed to next handler.
- //       next();
-//    }
-//};
-
-//export default rateLimiter;

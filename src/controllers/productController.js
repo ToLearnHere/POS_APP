@@ -20,7 +20,6 @@ export async function createOrUpdateProduct(req, res) {
       purchase_cost = 0,
       selling_price,
       current_stock = 0,
-      reorder_level = 10,
       image = null
     } = req.body;
 
@@ -50,7 +49,7 @@ export async function createOrUpdateProduct(req, res) {
       ) VALUES (
         ${barcode}, ${name}, ${category_id}, ${unit_type},
         ${purchase_cost}, ${selling_price}, ${current_stock},
-        ${reorder_level}, ${image}, ${clerk_id}
+        ${image}, ${clerk_id}
       )
       ON CONFLICT (barcode) DO UPDATE SET
         name = EXCLUDED.name,
@@ -59,7 +58,6 @@ export async function createOrUpdateProduct(req, res) {
         purchase_cost = EXCLUDED.purchase_cost,
         selling_price = EXCLUDED.selling_price,
         current_stock = EXCLUDED.current_stock,
-        reorder_level = EXCLUDED.reorder_level,
         image = EXCLUDED.image,
         updated_at = NOW()
       RETURNING product_id, name, barcode, selling_price, image, current_stock, category_id
