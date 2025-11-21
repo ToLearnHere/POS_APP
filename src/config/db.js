@@ -9,6 +9,7 @@ export async function initDB() {
     try {
 
         // --- 1. Utility for Automatic Updated_At ---
+        // This is a single CREATE OR REPLACE FUNCTION command, so it's safe.
         await sql`
             CREATE OR REPLACE FUNCTION set_updated_at()
             RETURNS TRIGGER AS $$
@@ -40,7 +41,6 @@ export async function initDB() {
                 purchase_cost DECIMAL(10,2) DEFAULT 0.00,
                 selling_price DECIMAL(10,2) NOT NULL,
                 current_stock INTEGER DEFAULT 0,
-                -- reorder_level INTEGER DEFAULT 10, <--- REMOVED
                 image TEXT,
                 is_active BOOLEAN DEFAULT true,
                 clerk_id VARCHAR(255) NOT NULL,
@@ -50,12 +50,17 @@ export async function initDB() {
         `;
         
         // 4. Trigger for Products (Automatic updated_at)
+        // FIX: Separate DROP TRIGGER and CREATE TRIGGER into two commands.
+
+        // 4a. Drop the trigger (Command 1)
+        await sql`DROP TRIGGER IF EXISTS set_products_updated_at ON products`;
+        
+        // 4b. Create the trigger (Command 2)
         await sql`
-            DROP TRIGGER IF EXISTS set_products_updated_at ON products;
             CREATE TRIGGER set_products_updated_at
             BEFORE UPDATE ON products
             FOR EACH ROW
-            EXECUTE FUNCTION set_updated_at();
+            EXECUTE FUNCTION set_updated_at()
         `;
         
         // --- Sales and Inventory Tables ---
@@ -98,7 +103,7 @@ export async function initDB() {
         `;
 
 
-        // 8. Default categories
+        // 8. Default categories (This is a single INSERT...ON CONFLICT statement, so it's safe)
         await sql`
             INSERT INTO categories (name) VALUES
                 ('Snacks'), ('Drinks'), ('Canned Goods'), ('Toiletries'),
@@ -106,7 +111,7 @@ export async function initDB() {
             ON CONFLICT (name) DO NOTHING
         `;
 
-        // 9. Indexes for speed (Uncommented and refined)
+        // 9. Indexes for speed (All are correctly separated)
         await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
         await sql`CREATE INDEX IF NOT EXISTS idx_products_clerk ON products(clerk_id)`;
         await sql`CREATE INDEX IF NOT EXISTS idx_sales_orders_clerk ON sales_orders(clerk_id)`;
