@@ -37,6 +37,9 @@ const authMiddleware = async (req, res, next) => {
         // We use clerkClient.sessions.verifySession (or similar) to verify the token.
         // For standard Clerk JWTs (like the ones from getToken()), use sessions.verifySession or sessions.verifyToken
         // Since you are using Express, the recommended approach is usually to verify the token directly.
+
+        let userId = null;
+        let sessionId = null;
         
         // If your token is a Clerk Session Token (from getToken()), use:
         // const session = await clerkClient.sessions.verifySession(sessionToken);
@@ -46,8 +49,8 @@ const authMiddleware = async (req, res, next) => {
         // If your token is a Clerk-issued JWT (which `getToken()` provides):
         // You can decode the token to get the claims and verify the signature using the public key.
         // A direct, production-ready solution involves using the Clerk `verifyToken` function:
-        const session = await clerkClient.sessions.verifySession(sessionToken);
-        userId = session.userId;
+        const jwtPayload = await clerkClient.verifyToken(sessionToken);
+        userId = jwtPayload.sub; // Standard JWT claim for the user ID
 
         if (!userId) {
             console.log('Verification failed: No userId found in verified token.');
