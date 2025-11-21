@@ -37,9 +37,6 @@ const authMiddleware = async (req, res, next) => {
         // We use clerkClient.sessions.verifySession (or similar) to verify the token.
         // For standard Clerk JWTs (like the ones from getToken()), use sessions.verifySession or sessions.verifyToken
         // Since you are using Express, the recommended approach is usually to verify the token directly.
-
-        let userId = null;
-        let sessionId = null;
         
         // If your token is a Clerk Session Token (from getToken()), use:
         // const session = await clerkClient.sessions.verifySession(sessionToken);
