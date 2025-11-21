@@ -49,8 +49,8 @@ const authMiddleware = async (req, res, next) => {
         // If your token is a Clerk-issued JWT (which `getToken()` provides):
         // You can decode the token to get the claims and verify the signature using the public key.
         // A direct, production-ready solution involves using the Clerk `verifyToken` function:
-        const jwtPayload = await clerkClient.verifyToken(sessionToken);
-        userId = jwtPayload.sub; // Standard JWT claim for the user ID
+        const session = await clerkClient.sessions.verifySession(sessionToken);
+        userId = session.userId;
 
         if (!userId) {
             console.log('Verification failed: No userId found in verified token.');
@@ -67,11 +67,15 @@ const authMiddleware = async (req, res, next) => {
         console.log('Auth successful (Verified JWT) for userId:', userId);
         next();
     } catch (error) {
-        console.error('CRITICAL: Token verification failed:', error.message);
+        // 🚨 ADD THIS LINE TO DEBUG 🚨
+        console.error('CRITICAL: Token verification failed:', error); 
         console.log('Received token:', req.headers.authorization);
+        // console.error('CRITICAL: Token verification failed:', error.message);
+        // console.log('Received token:', req.headers.authorization);
         // If verification fails (e.g., expired, wrong signature), treat as unauthenticated
         req.auth = null;
         next(); 
+
     }
 };
 
