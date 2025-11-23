@@ -32,12 +32,12 @@ export async function createOrUpdateProduct(req, res) {
       return res.status(400).json(response);
     }
 
-    console.log("Inserting/updating product for clerk_id:", user_id);
+    console.log("Inserting/updating product for user_id:", user_id);
     const result = await sql`
       INSERT INTO products (
         barcode, name, category_id, unit_type,
         purchase_cost, selling_price, current_stock,
-        image, clerk_id
+        image, user_id
       ) VALUES (
         ${barcode}, ${name}, ${category_id}, ${unit_type},
         ${purchase_cost}, ${selling_price}, ${current_stock},
