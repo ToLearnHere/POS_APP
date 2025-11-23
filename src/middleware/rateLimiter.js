@@ -8,11 +8,11 @@ import ratelimit from "../config/upstash.js"; // Assuming this imports an Upstas
  */
 const rateLimiter = async (req, res, next) => {
     let identifierKey;
-    const clerk_id = req.auth?.userId; // Extract Clerk User ID
+    const user_id = req.auth?.user_id; // Extract Clerk User ID
 
     // 1. Rate Limit Per Authenticated User ID (Recommended)
-    if (clerk_id) {
-        identifierKey = `user_${clerk_id}`;
+    if (user_id) {
+        identifierKey = `user_${user_id}`;
     } else {
         // 2. Fallback to IP for unauthenticated or public routes (if auth middleware skipped)
         const clientIp = req.headers['x-forwarded-for'] || req.ip;

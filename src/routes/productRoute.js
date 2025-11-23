@@ -6,7 +6,6 @@ import {
    createCategory,
    getCategories
 } from '../controllers/productController.js';
-import authMiddleware from '../middleware/auth.js';
 import rateLimiter from '../middleware/rateLimiter.js';
 
 const router = express.Router();
@@ -43,10 +42,6 @@ router.use((req, res, next) => {
  next();
 });
 
-// 2. Apply Auth middleware to all routes
-// This is the middleware that sets req.auth or req.auth = null
-router.use(authMiddleware);
-
 // 3. Apply rate limiter middleware to all routes (Runs after auth, uses req.auth.userId)
 router.use(rateLimiter); 
 
@@ -58,13 +53,13 @@ router.use(rateLimiter);
 // Note: We are using the createOrUpdateProduct controller which already
 // handles the 401 Unauthorized check internally using req.auth?.userId.
 router.post('/product', asyncHandler(createOrUpdateProduct));
-router.get('/products', asyncHandler(getProducts));
+router.get('/products/:userId', asyncHandler(getProducts));
 router.get('/product/search', asyncHandler(searchProductByBarcode));
 
 // Category endpoints
 router.post('/category', asyncHandler(createCategory));
 router.post('/categories', asyncHandler(createCategory)); 
-router.get('/categories', asyncHandler(getCategories));
+router.get('/categories/', asyncHandler(getCategories));
 
 // Test endpoint (can be helpful for health checks)
 router.get('/test', (req, res) => {

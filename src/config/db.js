@@ -43,7 +43,7 @@ export async function initDB() {
                 current_stock INTEGER DEFAULT 0,
                 image TEXT,
                 is_active BOOLEAN DEFAULT true,
-                clerk_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), 
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() 
             )
@@ -69,7 +69,7 @@ export async function initDB() {
         await sql`
             CREATE TABLE IF NOT EXISTS sales_orders (
                 id SERIAL PRIMARY KEY,
-                clerk_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
                 total_amount DECIMAL(10,2) NOT NULL,
                 payment_method VARCHAR(50),
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -97,7 +97,7 @@ export async function initDB() {
                 type VARCHAR(20) NOT NULL CHECK (type IN ('add_stock','return','adjustment','wastage')),
                 quantity INTEGER NOT NULL,
                 reason TEXT,
-                clerk_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             )
         `;
@@ -112,12 +112,12 @@ export async function initDB() {
         `;
 
         // 9. Indexes for speed (All are correctly separated)
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_clerk ON products(clerk_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_sales_orders_clerk ON sales_orders(clerk_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_sales_items_order ON sales_items(order_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_sales_items_product ON sales_items(product_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_clerk ON products(user_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_sales_orders_clerk ON sales_orders(user_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_sales_items_order ON sales_items(order_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_sales_items_product ON sales_items(product_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id)`;
 
 
         console.log("Database ready! Inventory and Sales tables initialized.");

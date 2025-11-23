@@ -4,14 +4,7 @@ import { sql } from '../config/db.js'; // adjust path if needed
 
 // 1. Create / Update Product (same as your transaction style)
 export async function createOrUpdateProduct(req, res) {
-  console.log("=== createOrUpdateProduct START ===");
-  console.log("Request body:", JSON.stringify(req.body));
-  console.log("req.auth:", req.auth);
-  
-  // Set response headers early
-  res.setHeader('Content-Type', 'application/json');
-  
-  try {
+    try {
     const {
       barcode,
       name,
@@ -20,13 +13,12 @@ export async function createOrUpdateProduct(req, res) {
       purchase_cost = 0,
       selling_price,
       current_stock = 0,
-      image = null
+      image = null,
+      user_id,
     } = req.body;
 
-    const clerk_id = req.auth?.userId; // Clerk middleware gives this
-
     // Validation
-    if (!clerk_id) {
+    if (!user_id) {
       console.log("No clerk_id, sending 401 Unauthorized");
       const response = { message: "Unauthorized" };
       console.log("Sending 401 response:", JSON.stringify(response));
@@ -40,7 +32,7 @@ export async function createOrUpdateProduct(req, res) {
       return res.status(400).json(response);
     }
 
-    console.log("Inserting/updating product for clerk_id:", clerk_id);
+    console.log("Inserting/updating product for clerk_id:", user_id);
     const result = await sql`
       INSERT INTO products (
         barcode, name, category_id, unit_type,
@@ -49,7 +41,7 @@ export async function createOrUpdateProduct(req, res) {
       ) VALUES (
         ${barcode}, ${name}, ${category_id}, ${unit_type},
         ${purchase_cost}, ${selling_price}, ${current_stock},
-        ${image}, ${clerk_id}
+        ${image}, ${user_id}
       )
       ON CONFLICT (barcode) DO UPDATE SET
         name = EXCLUDED.name,
@@ -62,8 +54,6 @@ export async function createOrUpdateProduct(req, res) {
         updated_at = NOW()
       RETURNING product_id, name, barcode, selling_price, image, current_stock, category_id
     `;
-
-    console.log("Product saved successfully:", result[0]);
     const response = {
       message: "Product saved successfully",
       product: result[0]
@@ -73,7 +63,6 @@ export async function createOrUpdateProduct(req, res) {
     console.log("=== createOrUpdateProduct SUCCESS ===");
 
   } catch (error) {
-    console.error("=== createOrUpdateProduct ERROR ===");
     console.error("Error saving product:", error);
     console.error("Error stack:", error.stack);
     if (!res.headersSent) {
@@ -88,18 +77,9 @@ export async function createOrUpdateProduct(req, res) {
 // 2. Get all products
 
 export async function getProducts(req, res) {
-  console.log("=== getProducts START ===");
-  console.log("req.auth:", req.auth);
-  console.log("userId =", req.auth?.userId);
-  
-  // Set response headers early
-  res.setHeader('Content-Type', 'application/json');
-  
   try {
-    const clerk_id = req.auth?.userId;
-    if (!clerk_id) {
-      console.log("No clerk_id, sending 401 Unauthorized");
-      const response = { message: "Unauthorized" };
+    const user_id = req.params
+    if (!user_id) {
       console.log("Sending 401 response:", JSON.stringify(response));
       return res.status(401).json(response);
     }
@@ -108,7 +88,7 @@ export async function getProducts(req, res) {
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.clerk_id = ${clerk_id} AND p.is_active = true
+      WHERE p.clerk_id = ${userId} AND p.is_active = true
       ORDER BY p.created_at DESC
     `;
 
@@ -134,17 +114,17 @@ export async function getProducts(req, res) {
 export async function searchProductByBarcode(req, res) {
   try {
     const { barcode } = req.query;
-    const clerk_id = req.auth?.userId;
+    const user_id = req.auth?.userId;
 
-    if (!clerk_id) return res.status(401).json({ message: "Unauthorized" });
+    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
     if (!barcode) return res.status(400).json({ message: "Barcode is required" });
 
     const product = await sql`
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.barcode = ${barcode} 
-        AND p.clerk_id = ${clerk_id} 
+      WHERE p.barcode = ${barcode}
+        AND p.clerk_id = ${clerk_id}
         AND p.is_active = true
       LIMIT 1
     `;
@@ -237,21 +217,11 @@ export async function createCategory(req, res) {
 
 
 export async function getCategories(req, res) {
-  console.log("=== getCategories START ===");
-  console.log("req.auth:", req.auth);
-  console.log("userId =", req.auth?.userId);
-  
-  // Set response headers early
-  res.setHeader('Content-Type', 'application/json');
-  
   try {
-    // Categories are shared across all users, so we don't require auth
-    // But we can still log if auth is present
-    const categories = await sql`SELECT id, name FROM categories ORDER BY name ASC`;
+    const categories = await sql`SELECT * FROM categories ORDER BY name ASC`;
 
     console.log("Categories found:", categories.length);
     const response = { categories };
-    console.log("Sending categories response with", categories.length, "categories");
     res.status(200).json(response);
   } catch (error) {
     console.error("CRASH in getCategories:", error);
