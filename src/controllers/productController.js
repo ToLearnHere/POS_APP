@@ -37,7 +37,7 @@ export async function createOrUpdateProduct(req, res) {
       INSERT INTO products (
         barcode, name, category_id, unit_type,
         purchase_cost, selling_price, current_stock,
-        reorder_level, image, clerk_id
+        image, clerk_id
       ) VALUES (
         ${barcode}, ${name}, ${category_id}, ${unit_type},
         ${purchase_cost}, ${selling_price}, ${current_stock},
@@ -78,7 +78,7 @@ export async function createOrUpdateProduct(req, res) {
 
 export async function getProducts(req, res) {
   try {
-    const user_id = req.params
+    const {userId: user_id} = req.params
     if (!user_id) {
       console.log("Sending 401 response:", JSON.stringify(response));
       return res.status(401).json(response);
@@ -124,7 +124,7 @@ export async function searchProductByBarcode(req, res) {
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.barcode = ${barcode}
-        AND p.clerk_id = ${clerk_id}
+        AND p.user_id = ${user_id}
         AND p.is_active = true
       LIMIT 1
     `;
@@ -211,14 +211,9 @@ export async function createCategory(req, res) {
   }
 }
 
-// 5. Get all categories
-// getCategories — ADD CLERK CHECK (makes it user-specific)
-// backend/controllers/productController.js
-
-
 export async function getCategories(req, res) {
   try {
-    const categories = await sql`SELECT * FROM categories ORDER BY name ASC`;
+    const categories = await sql `SELECT * FROM categories ORDER BY name ASC`;
 
     console.log("Categories found:", categories.length);
     const response = { categories };

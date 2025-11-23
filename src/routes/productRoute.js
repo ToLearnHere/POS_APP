@@ -52,7 +52,7 @@ router.use(rateLimiter);
 // Product endpoints
 // Note: We are using the createOrUpdateProduct controller which already
 // handles the 401 Unauthorized check internally using req.auth?.userId.
-router.post('/product', asyncHandler(createOrUpdateProduct));
+router.post('/products', asyncHandler(createOrUpdateProduct));
 router.get('/products/:userId', asyncHandler(getProducts));
 router.get('/product/search', asyncHandler(searchProductByBarcode));
 
