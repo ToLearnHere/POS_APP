@@ -122,12 +122,9 @@ export async function getProductsByCategory(req, res) {
     // Build dynamic WHERE conditions
     let query = sql`
       SELECT 
-        p.name,
-        p.price,
-        p.quantity,
-        p.image_url,
-        p.category_id,
-        p.created_at,
+        p.product_id, p.barcode, p.name, p.category_id, p.unit_type,
+        p.purchase_cost, p.selling_price, p.current_stock, p.image,
+        p.user_id, p.created_at, p.updated_at,
         c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
