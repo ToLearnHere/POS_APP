@@ -14,17 +14,17 @@ export async function createOrUpdateProduct(req, res) {
       selling_price,
       current_stock = 0,
       image = null,
-      user_id,
+      userId,
     } = req.body;
 
     // Validation
-    if (!user_id) {
-      console.log("No clerk_id, sending 401 Unauthorized");
+    if (!userId) {
+      console.log("No userId, sending 401 Unauthorized");
       const response = { message: "Unauthorized" };
       console.log("Sending 401 response:", JSON.stringify(response));
       return res.status(401).json(response);
     }
-    
+
     if (!barcode || !name || !selling_price || !category_id) {
       console.log("Missing required fields");
       const response = { message: "barcode, name, selling_price, and category_id are required" };
@@ -32,7 +32,7 @@ export async function createOrUpdateProduct(req, res) {
       return res.status(400).json(response);
     }
 
-    console.log("Inserting/updating product for user_id:", user_id);
+    // console.log("Inserting/updating product for userId:", userId);
     const result = await sql`
       INSERT INTO products (
         barcode, name, category_id, unit_type,
@@ -41,7 +41,7 @@ export async function createOrUpdateProduct(req, res) {
       ) VALUES (
         ${barcode}, ${name}, ${category_id}, ${unit_type},
         ${purchase_cost}, ${selling_price}, ${current_stock},
-        ${image}, ${user_id}
+        ${image}, ${userId}
       )
       ON CONFLICT (barcode) DO UPDATE SET
         name = EXCLUDED.name,
@@ -78,8 +78,9 @@ export async function createOrUpdateProduct(req, res) {
 
 export async function getProducts(req, res) {
   try {
-    const {userId: user_id} = req.params
-    if (!user_id) {
+    const userId = req.query.userId;
+    if (!userId) {
+      const response = { message: "Unauthorized" };
       console.log("Sending 401 response:", JSON.stringify(response));
       return res.status(401).json(response);
     }
@@ -88,7 +89,7 @@ export async function getProducts(req, res) {
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.clerk_id = ${userId} AND p.is_active = true
+      WHERE p.user_id = ${userId} AND p.is_active = true
       ORDER BY p.created_at DESC
     `;
 
@@ -109,23 +110,75 @@ export async function getProducts(req, res) {
     console.log("=== getProducts END (ERROR) ===");
   }
 }
+export async function getProductsByCategory(req, res) {
+  try {
+    const { userId: user_id } = req.params;
+    const { category } = req.query; // ← NEW: get category from query params
+
+    if (!user_id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Build dynamic WHERE conditions
+    let query = sql`
+      SELECT 
+        p.id,
+        p.name,
+        p.price,
+        p.quantity,
+        p.image_url,
+        p.category_id,
+        p.created_at,
+        c.name AS category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.user_id = ${user_id}
+        AND p.is_active = true
+    `;
+
+    // Add category filter if provided
+    if (category && category !== "" && category !== "null") {
+      query = sql`
+        ${query}
+        AND p.category_id = ${category}
+      `;
+    }
+
+    query = sql`
+      ${query}
+      ORDER BY p.created_at DESC
+    `;
+
+    const products = await query;
+
+    console.log(`Products found: ${products.length} (category: ${category || "All"})`);
+
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("getProducts ERROR:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: "Server error",
+        error: error.message,
+      });
+    }
+  }
+}
 
 // 3. Search by barcode (for POS)
 export async function searchProductByBarcode(req, res) {
   try {
     const { barcode } = req.query;
-    const user_id = req.auth?.userId;
+    const userId = req.auth?.userId;
 
-    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
     if (!barcode) return res.status(400).json({ message: "Barcode is required" });
 
     const product = await sql`
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.barcode = ${barcode}
-        AND p.user_id = ${user_id}
-        AND p.is_active = true
+      WHERE p.barcode = ${barcode} AND p.user_id = ${userId}
       LIMIT 1
     `;
 

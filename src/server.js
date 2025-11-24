@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import cors from 'cors';                    // MUST HAVE
+import cors from 'cors';
 import { initDB } from './config/db.js';
 import rateLimiter from './middleware/rateLimiter.js';
 import productRoute from './routes/productRoute.js';
@@ -11,13 +11,13 @@ dotenv.config();
 
 const app = express();
 
-// 1. CORS FIRST — THIS FIXES THE HTML ERROR
+// 1. CORS FIRST — REQUIRED FOR EXPO + RENDER
 app.use(cors({
-  origin: true,        // Allows Expo Go (very important!)
+  origin: true,
   credentials: true
 }));
 
-// 2. Other middleware
+// 2. Global middleware
 app.use(rateLimiter);
 app.use(express.json());
 
@@ -26,17 +26,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', time: new Date().toISOString() });
 });
 
-// 4. Mount routes — THIS MUST BE EXACT
-app.use('/api', productRoute);           // products, categories, etc.
-app.use('/api/transactions', transactionsRoute);
+// ✅ FIX: Proper route mounting
+app.use('/api/products', productRoute);           
 
+// 4. Port
 const PORT = process.env.PORT || 5001;
 
+// 5. Start server
 initDB().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`✅ Server running on port ${PORT}`);
   });
 });
 
 // Start cron only in production
-if (process.env.NODE_ENV === 'production') job.start();
+if (process.env.NODE_ENV === 'production') {
+  job.start();
+}

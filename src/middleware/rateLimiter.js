@@ -14,10 +14,15 @@ const rateLimiter = async (req, res, next) => {
     if (user_id) {
         identifierKey = `user_${user_id}`;
     } else {
-        // 2. Fallback to IP for unauthenticated or public routes (if auth middleware skipped)
-        const clientIp = req.headers['x-forwarded-for'] || req.ip;
+      // 2. Fallback to IP for unauthenticated or public routes (if auth middleware skipped)
+      const clientIp = req.headers['x-forwarded-for'] || req.ip;
+      if (clientIp) {
         identifierKey = `ip_${clientIp}`;
         console.warn("Rate Limiter using IP fallback (Unauthenticated access).");
+      } else {
+        console.warn("No identifier available for rate limiting, proceeding without rate limit.");
+        return next();
+      }
     }
 
     try {
