@@ -4,7 +4,6 @@ import cors from 'cors';
 import { initDB } from './config/db.js';
 import rateLimiter from './middleware/rateLimiter.js';
 import productRoute from './routes/productRoute.js';
-import transactionsRoute from './routes/transactionsRoute.js';
 import job from './config/cron.js';
 
 dotenv.config();
