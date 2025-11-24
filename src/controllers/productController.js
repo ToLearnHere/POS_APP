@@ -122,7 +122,6 @@ export async function getProductsByCategory(req, res) {
     // Build dynamic WHERE conditions
     let query = sql`
       SELECT 
-        p.id,
         p.name,
         p.price,
         p.quantity,
