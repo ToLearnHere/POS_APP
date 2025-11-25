@@ -22,7 +22,7 @@ export async function initDB() {
         // --- 2. Categories ---
         await sql`
             CREATE TABLE IF NOT EXISTS categories (
-                id SERIAL PRIMARY KEY,
+                category_id SERIAL PRIMARY KEY,
                 name VARCHAR(100) UNIQUE NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             )
@@ -34,7 +34,7 @@ export async function initDB() {
                 product_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 barcode VARCHAR(50) UNIQUE NOT NULL,
                 name VARCHAR(255) NOT NULL,
-                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+                category_id SERIAL REFERENCES categories(category_id) ON DELETE SET NULL,
                 unit_type VARCHAR(20) NOT NULL DEFAULT 'pcs'
                     CHECK (unit_type IN ('pcs','pack','box','kg','g','L','mL','dozen')),
                 purchase_cost DECIMAL(10,2) DEFAULT 0.00,
@@ -48,27 +48,6 @@ export async function initDB() {
             )
         `;
 
-        // THIS FIXES YOUR ERROR: Add user_id column if table was created before it existed
-        await sql`
-            ALTER TABLE products 
-            ADD COLUMN IF NOT EXISTS user_id VARCHAR(255) NOT NULL DEFAULT 'temp-migration-user'
-        `;
-
-        // Clean up the temporary default (safe to run multiple times)
-        await sql`
-            ALTER TABLE products 
-            ALTER COLUMN user_id DROP DEFAULT
-        `;
-
-        // --- 4. Auto updated_at trigger for products ---
-        await sql`DROP TRIGGER IF EXISTS set_products_updated_at ON products`;
-
-        await sql`
-            CREATE TRIGGER set_products_updated_at
-            BEFORE UPDATE ON products
-            FOR EACH ROW
-            EXECUTE FUNCTION set_updated_at()
-        `;
 
         // --- 5. Sales Orders ---
         await sql`
@@ -116,14 +95,12 @@ export async function initDB() {
         `;
 
         // --- 9. Optional: Useful Indexes ---
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_sales_orders_user ON sales_orders(user_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_products_user ON products(user_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_sales_orders_user ON sales_orders(user_id)`;
+        // await sql`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id)`;
 
-        console.log("Database initialized successfully! All tables ready.");
-        console.log("user_id column is now guaranteed to exist in products table.");
-        
+        console.log("Database initialized successfully! All tables ready.");    
     } catch (error) {
         console.error("Database initialization FAILED:", error);
         console.error("Error details:", error.message);
@@ -132,4 +109,4 @@ export async function initDB() {
 }
 
 // Run this on server startup (optional)
-// initDB();
+initDB();
