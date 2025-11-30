@@ -34,7 +34,7 @@ export async function initDB() {
                 product_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 barcode VARCHAR(50) UNIQUE NOT NULL,
                 name VARCHAR(255) NOT NULL,
-                category_id SERIAL REFERENCES categories(category_id) ON DELETE SET NULL,
+                category_id INTEGER REFERENCES categories(category_id) ON DELETE SET NULL,
                 unit_type VARCHAR(20) NOT NULL DEFAULT 'pcs'
                     CHECK (unit_type IN ('pcs','pack','box','kg','g','L','mL','dozen')),
                 purchase_cost DECIMAL(10,2) DEFAULT 0.00,
