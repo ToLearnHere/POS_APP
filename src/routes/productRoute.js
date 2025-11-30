@@ -35,7 +35,9 @@ router.delete("/categories/:id", deleteCategory);
 ========================= */
 
 // GET products by category + user
-// /api/products/category/:categoryId/:userId
+// Correct route — matches what your frontend calls
+// ✅ CORRECT: Matches your frontend URL exactly
+// backend/routes/productRoutes.js  ← this file
 router.get("/category/:userId/:categoryId", getProductsByCategory);
 // CREATE product
 // /api/products
