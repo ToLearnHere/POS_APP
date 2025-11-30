@@ -8,12 +8,12 @@ import { sql } from "../config/db.js";
 export const getCategories = async (req, res) => {
   try {
     const categories = await sql`
-      SELECT *
+      SELECT category_id, name, created_at
       FROM categories
       ORDER BY created_at DESC
     `;
 
-    res.status(200).json(categories);
+    res.status(200).json({ categories });   // ← wrapped
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ message: "Server error" });
@@ -90,28 +90,26 @@ export const deleteCategory = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     const { userId, categoryId } = req.params;
-
-    if (!userId || !categoryId) {
-      return res.status(400).json({ message: "Missing userId or categoryId" });
-    }
+    console.log("Params:", { userId, categoryId });
 
     const products = await sql`
       SELECT p.*, c.name as category_name
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id  // ✅ Fixed JOIN
-      WHERE p.category_id = ${categoryId}
+      INNER JOIN categories c ON p.category_id = c.category_id
+      WHERE p.category_id =${categoryId}
         AND p.user_id = ${userId}
       ORDER BY p.created_at DESC
     `;
 
-    // ✅ Always wrap in { products: [...] } — your frontend expects this
-    res.status(200).json({ products });
+    console.log("DB returned products:", products);
 
+    res.status(200).json({ products });
   } catch (error) {
     console.error("Get products by category error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 /* =========================
    CREATE PRODUCT

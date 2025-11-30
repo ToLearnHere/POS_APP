@@ -6,6 +6,7 @@ export const sql = neon(process.env.DATABASE_URL);
 
 export async function initDB() {
     try {
+        
         console.log("Initializing database...");
 
         // --- 1. Utility: Auto update updated_at ---
@@ -106,6 +107,7 @@ export async function initDB() {
         console.error("Error details:", error.message);
         process.exit(1);
     }
+    
 }
 
 // Run this on server startup (optional)
