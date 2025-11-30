@@ -94,7 +94,7 @@ export const getProductsByCategory = async (req, res) => {
     const products = await sql`
       SELECT p.*, c.name as category_name
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.category_id
       WHERE p.category_id = ${categoryId}
         AND p.user_id = ${userId}
       ORDER BY p.created_at DESC
