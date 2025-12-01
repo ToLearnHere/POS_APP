@@ -41,6 +41,6 @@ router.delete("/categories/:id", deleteCategory);
 router.get("/category/:userId/:categoryId", getProductsByCategory);
 // CREATE product
 // /api/products
-router.post("/", createProduct);
+router.post("/:userId", createProduct);
 
 export default router;
