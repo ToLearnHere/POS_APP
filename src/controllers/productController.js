@@ -34,7 +34,7 @@ export const createCategory = async (req, res) => {
 
     // Optional duplicate check
     const existing = await sql`
-      SELECT id
+      SELECT category_id
       FROM categories
       WHERE LOWER(name) = LOWER(${name})
     `;
@@ -135,8 +135,8 @@ export const createProduct = async (req, res) => {
       image,
     } = req.body;
 
-    console.log("➡️ PRODUCT PAYLOAD RECEIVED:", req.body);
-    console.log("➡️ USER ID FROM PARAMS:", userId);
+    // console.log("➡️ PRODUCT PAYLOAD RECEIVED:", req.body);
+    // console.log("➡️ USER ID FROM PARAMS:", userId);
 
     /* ======================================================
        VALIDATIONS (very clear & helpful messages)
