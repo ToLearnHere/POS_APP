@@ -206,35 +206,20 @@ export const createProduct = async (req, res) => {
 // Server-side: In your getProductByBarcode controller
 
 export const getProductByBarcode = async (req, res) => {
-  const { barcode, userId } = req.params;
+ const { barcode, userId } = req.params;
 
-  console.log("📥 Incoming request:");
-  console.log("User ID:", userId);
-  console.log("Barcode:", barcode);
+ console.log("User ID:", userId); // Still useful for verification
+console.log("--- DEBUGGING ALL PRODUCTS ---");
 
-  try {
-    const result = await sql`
-      SELECT 
-        product_id,
-        barcode,
-        name,
-        selling_price AS price,
-        unit_type
-      FROM products
-      WHERE barcode = ${barcode}
-        AND user_id = ${userId}
-        AND is_active = true
-      LIMIT 1
-    `;
+  try {
+    const result = await sql`
+      SELECT product_id, barcode, user_id, is_active FROM products LIMIT 50
+    `;
 
-    console.log("📤 SQL Result:", result);
+    console.log("All Product Data:", result);
 
-    if (!result || result.length === 0) {
-      return res.status(404).json({ message: "Not Found" });
-    }
-
-    return res.status(200).json(result[0]);
-  } catch (err) {
+    return res.status(200).json({ message: "DEBUG LOGGED" });
+  } catch (err) {
     console.error("DB ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }

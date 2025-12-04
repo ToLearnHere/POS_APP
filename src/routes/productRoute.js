@@ -35,8 +35,7 @@ router.get("/category/:userId/:categoryId", getProductsByCategory);
 // /api/products
 router.post("/:userId", createProduct);
 
-// ADD THIS NEW ROUTE
-router.get("/barcode/:userId/:barcode", getProductByBarcode);
 
+router.get("/barcode/:barcode/:userId", getProductByBarcode);
 
 export default router;
