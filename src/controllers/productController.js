@@ -199,3 +199,50 @@ export const createProduct = async (req, res) => {
     return res.status(500).json({ message: "Server error", detail: error.message });
   }
 };
+
+/* =========================
+   Get PRODUCT by Barcode
+========================= */
+export const getProductByBarcode = async (req, res) => {
+  // ✅ Get parameters from URL path
+  if (!userId) {
+    // This check is good but redundant if the route ensures :userId is present
+    return res.status(400).json({ message: "Missing userId in URL" });
+  }
+  
+  // 💡 ADDED: Check for missing barcode as well for a clearer 400 error
+  if (!barcode) {
+    return res.status(400).json({ message: "Missing barcode in URL" });
+  }
+
+  const barcode = req.params.barcode.trim(); 
+  const userId = req.params.userId;
+
+  try {
+    const result = await sql`
+      SELECT 
+      product_id,
+      barcode,
+      name,
+      selling_price AS price,
+      unit_type
+      FROM products 
+      WHERE barcode = ${barcode} 
+      AND user_id = ${userId}
+      AND is_active = true
+      LIMIT 1
+      `;
+
+    if (!result[0]) {
+      // ✅ Correctly returns 404 if the product doesn't exist for this user/barcode
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // ✅ Correctly returns the first product object with status 200
+    return res.status(200).json({ product: result[0] });
+  } catch (error) {
+    console.error('Error fetching product by barcode:', error);
+    // ✅ Correctly returns 500 for database/server issues
+    return res.status(500).json({ message: "Server error" });
+  }
+};

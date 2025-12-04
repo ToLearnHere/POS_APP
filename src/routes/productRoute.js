@@ -7,6 +7,7 @@ import {
   deleteCategory,
 
   // PRODUCTS
+  getProductByBarcode,
   getProductsByCategory,
   createProduct
 } from "../controllers/productController.js";
@@ -33,5 +34,8 @@ router.get("/category/:userId/:categoryId", getProductsByCategory);
 // CREATE product
 // /api/products
 router.post("/:userId", createProduct);
+
+// ADD THIS NEW ROUTE
+router.get("/barcode/:userId/:barcode", getProductByBarcode);
 
 export default router;
