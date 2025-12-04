@@ -47,7 +47,9 @@ export async function initDB() {
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             )
+          
         `;
+        
 
 
         // --- 5. Sales Orders ---

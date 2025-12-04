@@ -38,4 +38,5 @@ router.post("/:userId", createProduct);
 // ADD THIS NEW ROUTE
 router.get("/barcode/:userId/:barcode", getProductByBarcode);
 
+
 export default router;
