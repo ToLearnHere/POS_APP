@@ -247,3 +247,36 @@ export const getProductByBarcode = async (req, res) => {
     return res.status(500).json({ error: "Server error - check logs" });
   }
 };
+
+//search product if barcode unavailable
+// Add this function (you already have getProductByBarcode, etc.)
+export const searchProductsByName = async (req, res) => {
+  const { userId, query } = req.params;
+
+  if (!query || query.length < 2) {
+    return res.status(400).json({ message: "Query too short" });
+  }
+
+  try {
+    const { rows } = await sql`
+      SELECT 
+        product_id,
+        barcode,
+        name,
+        selling_price AS price,
+        current_stock,
+        unit_type
+      FROM products
+      WHERE user_id = ${userId}
+        AND is_active = true
+        AND LOWER(name) LIKE ${'%' + query.toLowerCase() + '%'}
+      ORDER BY name
+      LIMIT     10
+    `;
+
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error("Search error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

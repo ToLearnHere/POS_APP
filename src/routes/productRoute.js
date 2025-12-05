@@ -7,7 +7,8 @@ import {
   deleteCategory,
   getProductByBarcode,
   getProductsByCategory,
-  createProduct
+  createProduct,
+  searchProductsByName,
 } from "../controllers/productController.js";
 
 const router = express.Router();
@@ -23,10 +24,15 @@ router.delete("/categories/:id", deleteCategory);
    PRODUCTS
 ========================= */
 router.get("/category/:userId/:categoryId", getProductsByCategory);
+// Add this line with your other product routes
+router.get("/search/:userId/:query", searchProductsByName);
+router.get("/:userId/:barcode", getProductByBarcode);     
 
-// MOVE THESE TWO LINES TO THE TOP of the products section (or at least above the /:userId POST)
-router.get("/:userId/:barcode", getProductByBarcode);        // ← Must come BEFORE /:userId
-router.post("/:userId", createProduct);                     // ← This one can stay below
+
+
+
+router.post("/:userId", createProduct);                     
+
 
 
 export default router;
