@@ -203,32 +203,49 @@ export const createProduct = async (req, res) => {
 /* =========================
     Get PRODUCT by Barcode
  ========================= */
+// controllers/productController.js
 export const getProductByBarcode = async (req, res) => {
-  let { barcode } = req.params;
-  const { userId } = req.params;
+  const { userId, barcode: rawBarcode } = req.params;
 
-  const cleanBarcode = barcode.trim();
+  const barcode = rawBarcode?.trim();
 
-  console.log("Barcode received:", JSON.stringify(cleanBarcode));
-  console.log("Length:", cleanBarcode.length);
+  // THESE LOGS MUST APPEAR IN RENDER LOGS
+  console.log("BARCODE ROUTE HIT!");
+  console.log("User ID :", userId);
+  console.log("Raw barcode :", JSON.stringify(rawBarcode));
+  console.log("Clean barcode :", JSON.stringify(barcode));
+  console.log("Length :", barcode?.length);
+
+  if (!barcode || !userId) {
+    return res.status(400).json({ error: "Missing params" });
+  }
 
   try {
-    const [product] = await sql`
-      SELECT product_id, barcode, name, selling_price AS price
+    const { rows } = await sql`
+      SELECT 
+        product_id,
+        barcode,
+        name,
+        selling_price AS price,
+        current_stock,
+        unit_type
       FROM products
-      WHERE TRIM(barcode) = ${cleanBarcode}
+      WHERE TRIM(barcode) = ${barcode}
         AND user_id = ${userId}
         AND is_active = true
       LIMIT 1
     `;
 
-    if (!product) {
-      return res.status(404).json({ message: "Not found" });
+    if (rows.length === 0) {
+      console.log("NOT FOUND IN DB – returning 404");
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    return res.status(200).json(product);
+    console.log("PRODUCT FOUND →", rows[0].name);
+    return res.status(200).json(rows[0]);
+
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
+    console.error("DB ERROR:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 };
