@@ -206,22 +206,20 @@ export const createProduct = async (req, res) => {
 // controllers/productController.js
 export const getProductByBarcode = async (req, res) => {
   const { userId, barcode: rawBarcode } = req.params;
-
   const barcode = rawBarcode?.trim();
 
-  // THESE LOGS MUST APPEAR IN RENDER LOGS
-  console.log("BARCODE ROUTE HIT!");
-  console.log("User ID :", userId);
-  console.log("Raw barcode :", JSON.stringify(rawBarcode));
-  console.log("Clean barcode :", JSON.stringify(barcode));
-  console.log("Length :", barcode?.length);
-
-  if (!barcode || !userId) {
-    return res.status(400).json({ error: "Missing params" });
+  // Basic validation
+  if (!userId || !barcode) {
+    console.error("Missing params:", { userId, barcode });
+    return res.status(400).json({ error: "Missing userId or barcode" });
   }
 
+  // Log for debugging (remove later)
+  console.log("Querying DB for barcode:", barcode, "user:", userId);
+
   try {
-    const { rows } = await sql`
+    // Run the query — this is the exact format for @vercel/postgres
+    const result = await sql`
       SELECT 
         product_id,
         barcode,
@@ -236,16 +234,24 @@ export const getProductByBarcode = async (req, res) => {
       LIMIT 1
     `;
 
-    if (rows.length === 0) {
-      console.log("NOT FOUND IN DB – returning 404");
+    // Handle both possible response formats (Vercel vs raw pg)
+    const rows = result.rows || result;  // Fallback if no .rows
+    const product = rows[0] || null;
+
+    if (!product) {
+      console.log("No product found for barcode:", barcode);
       return res.status(404).json({ message: "Product not found" });
     }
 
-    console.log("PRODUCT FOUND →", rows[0].name);
-    return res.status(200).json(rows[0]);
+    console.log("Product returned:", product.name);
+    return res.status(200).json(product);
 
   } catch (err) {
-    console.error("DB ERROR:", err);
-    return res.status(500).json({ error: "Server error" });
+    // THIS WILL SHOW THE EXACT ERROR IN RENDER LOGS
+    console.error("=== 500 ERROR IN getProductByBarcode ===");
+    console.error("Error message:", err.message);
+    console.error("Full error:", err);
+    console.error("Stack:", err.stack);
+    return res.status(500).json({ error: "Server error - check logs" });
   }
 };
