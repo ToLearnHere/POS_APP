@@ -12,6 +12,14 @@ import {
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+  console.log("ANY REQUEST HIT THE ROUTER – TIME:", new Date().toISOString());
+  next();
+});
+router.get("/debug-barcode-test", (req, res) => {
+  console.log("DEBUG ROUTE HIT – YOUR DEPLOY IS FRESH!");
+  res.json({ message: "Deploy is working!", time: new Date().toISOString() });
+});
 /* =========================
    CATEGORIES
 ========================= */
@@ -30,9 +38,6 @@ router.post("/:userId", createProduct);                     // ← This one can 
 
 // You can even make it clearer like this:
 router.get("/:userId/barcode/:barcode", getProductByBarcode); // Optional – avoids conflict completely
-router.get("/debug-barcode-test", (req, res) => {
-  console.log("DEBUG ROUTE HIT – YOUR DEPLOY IS FRESH!");
-  res.json({ message: "Deploy is working!", time: new Date().toISOString() });
-});
+
 
 export default router;
