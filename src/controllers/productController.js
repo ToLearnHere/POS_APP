@@ -208,25 +208,13 @@ export const getProductByBarcode = async (req, res) => {
   const { userId, barcode: rawBarcode } = req.params;
   const barcode = rawBarcode?.trim();
 
-  // Basic validation
   if (!userId || !barcode) {
-    console.error("Missing params:", { userId, barcode });
-    return res.status(400).json({ error: "Missing userId or barcode" });
+    return res.status(400).json({ error: "Missing params" });
   }
 
-  // Log for debugging (remove later)
-  console.log("Querying DB for barcode:", barcode, "user:", userId);
-
   try {
-    // Run the query — this is the exact format for @vercel/postgres
-    const result = await sql`
-      SELECT 
-        product_id,
-        barcode,
-        name,
-        selling_price AS price,
-        current_stock,
-        unit_type
+    const { rows } = await sql`
+      SELECT product_id, barcode, name, selling_price AS price
       FROM products
       WHERE TRIM(barcode) = ${barcode}
         AND user_id = ${userId}
@@ -234,24 +222,13 @@ export const getProductByBarcode = async (req, res) => {
       LIMIT 1
     `;
 
-    // Handle both possible response formats (Vercel vs raw pg)
-    const rows = result.rows || result;  // Fallback if no .rows
-    const product = rows[0] || null;
-
-    if (!product) {
-      console.log("No product found for barcode:", barcode);
+    if (rows.length === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    console.log("Product returned:", product.name);
-    return res.status(200).json(product);
-
+    return res.status(200).json(rows[0]);
   } catch (err) {
-    // THIS WILL SHOW THE EXACT ERROR IN RENDER LOGS
-    console.error("=== 500 ERROR IN getProductByBarcode ===");
-    console.error("Error message:", err.message);
-    console.error("Full error:", err);
-    console.error("Stack:", err.stack);
-    return res.status(500).json({ error: "Server error - check logs" });
+    console.error("DB Error in getProductByBarcode:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 };
