@@ -208,13 +208,22 @@ export const getProductByBarcode = async (req, res) => {
   const { userId, barcode: rawBarcode } = req.params;
   const barcode = rawBarcode?.trim();
 
+  // Basic validation
   if (!userId || !barcode) {
-    return res.status(400).json({ error: "Missing params" });
+    console.error("Missing params:", { userId, barcode });
+    return res.status(400).json({ error: "Missing userId or barcode" });
   }
 
   try {
-    const { rows } = await sql`
-      SELECT product_id, barcode, name, selling_price AS price
+    // Run the query — this is the exact format for @vercel/postgres
+    const result = await sql`
+      SELECT 
+        product_id,
+        barcode,
+        name,
+        selling_price AS price,
+        current_stock,
+        unit_type
       FROM products
       WHERE TRIM(barcode) = ${barcode}
         AND user_id = ${userId}
@@ -222,13 +231,19 @@ export const getProductByBarcode = async (req, res) => {
       LIMIT 1
     `;
 
-    if (rows.length === 0) {
+    // Handle both possible response formats (Vercel vs raw pg)
+    const rows = result.rows || result;  // Fallback if no .rows
+    const product = rows[0] || null;
+
+    if (!product) {
+      console.log("No product found for barcode:", barcode);
       return res.status(404).json({ message: "Product not found" });
     }
 
-    return res.status(200).json(rows[0]);
+    console.log("Product returned:", product.name);
+    return res.status(200).json(product);
+
   } catch (err) {
-    console.error("DB Error in getProductByBarcode:", err.message);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error - check logs" });
   }
 };
