@@ -201,26 +201,34 @@ export const createProduct = async (req, res) => {
 };
 
 /* =========================
-   Get PRODUCT by Barcode
-========================= */
-// Server-side: In your getProductByBarcode controller
-
+    Get PRODUCT by Barcode
+ ========================= */
 export const getProductByBarcode = async (req, res) => {
- const { barcode, userId } = req.params;
+  let { barcode } = req.params;
+  const { userId } = req.params;
 
- console.log("User ID:", userId); // Still useful for verification
-console.log("--- DEBUGGING ALL PRODUCTS ---");
+  const cleanBarcode = barcode.trim();
 
-  try {
-    const result = await sql`
-      SELECT product_id, barcode, user_id, is_active FROM products LIMIT 50
-    `;
+  console.log("Barcode received:", JSON.stringify(cleanBarcode));
+  console.log("Length:", cleanBarcode.length);
 
-    console.log("All Product Data:", result);
+  try {
+    const [product] = await sql`
+      SELECT product_id, barcode, name, selling_price AS price
+      FROM products
+      WHERE TRIM(barcode) = ${cleanBarcode}
+        AND user_id = ${userId}
+        AND is_active = true
+      LIMIT 1
+    `;
 
-    return res.status(200).json({ message: "DEBUG LOGGED" });
-  } catch (err) {
-    console.error("DB ERROR:", err);
+    if (!product) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    return res.status(200).json(product);
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Server error" });
   }
 };

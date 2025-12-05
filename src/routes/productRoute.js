@@ -1,12 +1,10 @@
 // backend/routes/productRoutes.js
+
 import express from "express";
 import {
-  // CATEGORIES
   getCategories,
   createCategory,
   deleteCategory,
-
-  // PRODUCTS
   getProductByBarcode,
   getProductsByCategory,
   createProduct
@@ -17,25 +15,20 @@ const router = express.Router();
 /* =========================
    CATEGORIES
 ========================= */
-// GET all categories
 router.get("/categories", getCategories);
-
-// CREATE new category
-
 router.post("/categories", createCategory);
-
-// DELETE category
 router.delete("/categories/:id", deleteCategory);
 
 /* =========================
    PRODUCTS
 ========================= */
 router.get("/category/:userId/:categoryId", getProductsByCategory);
-// CREATE product
-// /api/products
-router.post("/:userId", createProduct);
 
+// MOVE THESE TWO LINES TO THE TOP of the products section (or at least above the /:userId POST)
+router.get("/:userId/:barcode", getProductByBarcode);        // ← Must come BEFORE /:userId
+router.post("/:userId", createProduct);                     // ← This one can stay below
 
-router.get("/barcode/:barcode/:userId", getProductByBarcode);
+// You can even make it clearer like this:
+router.get("/:userId/barcode/:barcode", getProductByBarcode); // Optional – avoids conflict completely
 
 export default router;
