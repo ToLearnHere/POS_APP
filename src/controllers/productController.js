@@ -203,7 +203,6 @@ export const createProduct = async (req, res) => {
 /* =========================
     Get PRODUCT by Barcode
  ========================= */
-// controllers/productController.js
 export const getProductByBarcode = async (req, res) => {
   const { userId, barcode: rawBarcode } = req.params;
   const barcode = rawBarcode?.trim();
