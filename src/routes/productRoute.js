@@ -27,11 +27,11 @@ router.get("/category/:userId/:categoryId", getProductsByCategory);
 // Add this line with your other product routes
 
 
+// routes/products.js
 router.get("/search/:userId", searchProductsByName);
-
-
-
 router.get("/:userId/:barcode", getProductByBarcode);     
+
+
 
 
 
