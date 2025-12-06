@@ -1,43 +1,23 @@
-// backend/routes/productRoutes.js
-
+// routes/productRoute.js
 import express from "express";
 import {
   getCategories,
   createCategory,
   deleteCategory,
-  getProductByBarcode,
   getProductsByCategory,
   createProduct,
-  searchProductsByName,
+  getProductByBarcode,
+    
 } from "../controllers/productController.js";
 
 const router = express.Router();
 
-/* =========================
-   CATEGORIES
-========================= */
+
 router.get("/categories", getCategories);
 router.post("/categories", createCategory);
-router.delete("/categories/:id", deleteCategory);
-
-/* =========================
-   PRODUCTS
-========================= */
+router.delete("/categories/:categoryId", deleteCategory);
 router.get("/category/:userId/:categoryId", getProductsByCategory);
-// Add this line with your other product routes
-
-
-// routes/products.js
-router.get("/search/:userId", searchProductsByName);
-router.get("/:userId/:barcode", getProductByBarcode);     
-
-
-
-
-
-
-router.post("/:userId", createProduct);                     
-
-
+router.post("/:userId", createProduct);
+router.get("/:userId/:barcode", getProductByBarcode);
 
 export default router;

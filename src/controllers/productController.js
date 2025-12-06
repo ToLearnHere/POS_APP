@@ -250,33 +250,6 @@ export const getProductByBarcode = async (req, res) => {
 
 //search product if barcode unavailable
 // Add this function (you already have getProductByBarcode, etc.)
-export const searchProductsByName = async (req, res) => {
-  const { userId } = req.params;
-  const { q } = req.query;
-
-  console.log("Searching for:", q, "User ID:", userId); // <-- must log
-
-  if (!q || q.trim().length < 2) return res.json([]);
-
-  const searchTerm = `%${q.trim()}%`;
-
-  try {
-    const { rows } = await sql`
-      SELECT product_id, barcode, name, selling_price AS price
-      FROM products
-      WHERE user_id = ${userId}
-        AND is_active = true
-        AND name ILIKE ${searchTerm}
-      ORDER BY CASE WHEN name ILIKE ${q.trim() + '%'} THEN 1 ELSE 2 END, name
-      LIMIT 15
-    `;
-
-    console.log("Search results:", rows); // <-- must log the array
-    return res.json(rows);
-  } catch (err) {
-    console.error("Search error:", err);
-    return res.status(500).json([]);
-  }
-};
-
-
+// routes: GET /api/products/search/:userId?q=query
+// NEW: Search by name or barcode
+// controllers/productController.js  ← ADD THIS FUNCTION (replace the broken one)
