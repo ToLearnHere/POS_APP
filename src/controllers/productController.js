@@ -253,9 +253,11 @@ export const getProductByBarcode = async (req, res) => {
 export const searchProductsByName = async (req, res) => {
   const { userId, query } = req.params;
 
-  if (!query || query.length < 2) {
-    return res.status(400).json({ message: "Query too short" });
+  if (!query || query.trim().length < 2) {
+    return res.json([]);
   }
+
+  const q = query.trim();
 
   try {
     const { rows } = await sql`
@@ -263,20 +265,21 @@ export const searchProductsByName = async (req, res) => {
         product_id,
         barcode,
         name,
-        selling_price AS price,
-        current_stock,
-        unit_type
+        selling_price AS price
       FROM products
       WHERE user_id = ${userId}
         AND is_active = true
-        AND LOWER(name) LIKE ${'%' + query.toLowerCase() + '%'}
-      ORDER BY name
-      LIMIT     10
+        AND name ILIKE ${'%' + q + '%'}
+      ORDER BY 
+        CASE WHEN name ILIKE ${q + '%'} THEN 1 ELSE 2 END,
+        name
+      LIMIT 15
     `;
 
-    return res.status(200).json(rows);
+    return res.json(rows);
   } catch (err) {
     console.error("Search error:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json([]);
   }
 };
+

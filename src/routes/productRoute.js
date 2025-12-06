@@ -25,7 +25,12 @@ router.delete("/categories/:id", deleteCategory);
 ========================= */
 router.get("/category/:userId/:categoryId", getProductsByCategory);
 // Add this line with your other product routes
-router.get("/search/:userId/:query", searchProductsByName);
+
+
+router.get("/search/:userId", searchProductsByName);
+
+
+
 router.get("/:userId/:barcode", getProductByBarcode);     
 
 
