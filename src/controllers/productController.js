@@ -110,6 +110,41 @@ export const getProductsByCategory = async (req, res) => {
   }
 };
 
+/* =========================
+   GET PRODUCTS BY NAME + USER
+   GET /api/products/category/:categoryId/:userId
+========================= */
+export const getProductsByName = async (req, res) => {
+  console.log("SEARCH ROUTE HIT:", req.params);   // ← ADD THIS LINE
+  console.log("Full URL:", req.originalUrl);
+  try {
+    const { userId, name } = req.params;
+
+    console.log("Search params:", { userId, name });
+
+    // If name is empty or just whitespace, return empty array early
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      return res.status(200).json({ products: [] });
+    }
+
+    const products = await sql`
+      SELECT p.*, c.name as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.category_id
+      WHERE p.user_id = ${userId}
+        AND LOWER(p.name) LIKE ${'%' + trimmedName.toLowerCase() + '%'}
+      ORDER BY p.created_at DESC
+    `;
+
+    console.log(`Found ${products.length} product(s) matching "${trimmedName}"`);
+
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Get products by name error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /* =========================
    CREATE PRODUCT

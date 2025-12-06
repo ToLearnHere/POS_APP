@@ -7,6 +7,7 @@ import {
   getProductsByCategory,
   createProduct,
   getProductByBarcode,
+  getProductsByName,
     
 } from "../controllers/productController.js";
 
@@ -17,6 +18,7 @@ router.get("/categories", getCategories);
 router.post("/categories", createCategory);
 router.delete("/categories/:categoryId", deleteCategory);
 router.get("/category/:userId/:categoryId", getProductsByCategory);
+router.get("/search/:userId/:name", getProductsByName);
 router.post("/:userId", createProduct);
 router.get("/:userId/:barcode", getProductByBarcode);
 
